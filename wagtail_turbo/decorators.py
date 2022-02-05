@@ -21,12 +21,12 @@ def turbo_enable(fn):
         if response.status_code == 301 or response.status_code == 302:
             return response
 
-        # Attempt to convert non-turbo response into a turbo response
-        if response.status_code == 200 and not isinstance(response, TurboResponse) and request.wagtailturbo_enabled and not request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
-            response = convert_to_turbo_response(request, response)
-
         # If the request was made by the turbo (using `fetch()`, rather than a regular browser request)
         if request.META.get('HTTP_X_REQUESTED_WITH') == 'WagtailTurbo':
+            # Attempt to convert non-turbo response into a turbo response
+            if response.status_code == 200 and not isinstance(response, TurboResponse) and request.wagtailturbo_enabled:
+                response = convert_to_turbo_response(request, response)
+
             if isinstance(response, TurboResponse):
                 return response
             else:
@@ -34,6 +34,7 @@ def turbo_enable(fn):
                 return TurboResponseLoadIt()
 
         # Regular browser request
+        # If we've got a turbo response, return it inside a bootstrap template so that it can be rendered
         if isinstance(response, TurboResponse):
             js = []
             css = []
@@ -43,8 +44,6 @@ def turbo_enable(fn):
                     js.append('wagtail_turbo/' + asset)
                 elif asset.endswith(".css"):
                     css.append('wagtail_turbo/' + asset)
-
-            print(js, css)
 
             # Wrap the response with our shell bootstrap template
             return render(

@@ -48,7 +48,7 @@
       top: 32px;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       font-size: 13px;
-      color: white;
+      color: black;
       width: 80px;
       text-align: center;
     }
@@ -109,7 +109,7 @@
   {% for src in js %}
   <script src="{% static src %}" async defer></script>
   {% endfor %}
-  <!-- <script>document.addEventListener('DOMContentLoaded', () => { setTimeout(() => { document.querySelector('.loading-screen').classList.add('loading-screen--show-spinner') }, 100) });</script> -->
+  <script>document.addEventListener('DOMContentLoaded', () => { setTimeout(() => { document.querySelector('.loading-screen').classList.add('loading-screen--show-spinner') }, 100) });</script>
 </body>
 
 </html>

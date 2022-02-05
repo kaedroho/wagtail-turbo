@@ -1,141 +1,202 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Wagtail Turbo Frame</title>
+        <title>Turbo Frame</title>
     </head>
     <body>
         <script>
             window.addEventListener("message", (event) => {
-                const frame = event.data.frame;
+                if (event.origin !== window.origin) {
+                    console.error("Turbo frame received event from unrecognised origin:", event.origin);
+                    return;
+                }
 
-                if (frame.view == 'iframe') {
-                    document.open();
-                    document.write(frame.context.html);
-                    document.close();
+                // Ignore any messages that we are not expecting
+                if (event.data.type !== "load") {
+                    return;
+                }
 
-                    // JavaScript API
-                    window.openModal = (url) => {
+                // JavaScript API
+                window.openModal = (path) => {
+                    parent.postMessage({
+                        id: event.data.id,
+                        type: 'open-modal',
+                        path,
+                    }, window.origin);
+                };
+
+                window.TURBO_ENABLED = true;
+
+                const handleResponse = (response) => {
+                    if (response.redirected) {
+                        const url = new URL(response.url);
                         parent.postMessage({
-                            id: frame.id,
-                            type: 'open-modal',
-                            url,
-                        }, "*");
-                    };
+                            id: event.data.frameId,
+                            type: 'replace-path',
+                            path: url.pathname + url.search,
+                        }, window.origin);
+                    }
 
-                    const onLoad = () => {
-                        if (event.data.mode === 'browser') {
-                            // Insert a <base target="_parent"> tag into the <head> of the iframe
-                            // This makes it open all links in the main window
-                            const baseElement = document.createElement('base');
-                            baseElement.target = '_parent';
-                            document.head.appendChild(baseElement);
-                        } else {
-                            // Insert a .wagtailturbo-modal class to the <body> element
-                            document.body.classList.add('wagtailturbo-modal');
-                        }
+                    if (
+                        response.headers
+                            .get("Content-Type")
+                            ?.startsWith("text/html")
+                    ) {
+                        void response.text().then((html) => {
+                            document.open();
+                            document.write(html);
+                            document.close();
 
-                        // Ajaxify links
-                        const processLink = (link) => {
+                            // Chrome/Edge load the document immedately and doesn't bother to fire DOMContentLoaded most of the time
+                            // Firefox never loads the document immediately and always fires DOMContentLoaded
+                            if (document.body) {
+                                onLoad();
+                            } else {
+                                document.addEventListener('DOMContentLoaded', onLoad);
+                            }
+                        });
+                    } else {
+                        console.error(
+                            "unknown content type",
+                            response.headers.get("Content-Type")
+                        );
+                    }
+                };
+
+                const onLoad = () => {
+                    // Ajaxify links
+                    const processLink = (link) => {
+                        link.addEventListener('click', (e) => {
+                            let path;
+
                             // Don't ajaxify download links
                             if (link.hasAttribute('download')) {
-                                return
+                                return;
                             }
 
                             // Get href
                             const href = link.getAttribute('href');
-                            if (!href || href.startsWith('#')) {
+                            if (!href) {
                                 return;
                             }
 
-                            link.addEventListener('click', (e) => {
-                                e.preventDefault();
-                                let url;
+                            // Don't ajaxify external links
+                            const isExternal = href[0] !== '/' && new URL(href).origin !== location.origin;
+                            if (isExternal) {
+                                return;
+                            }
 
-                                if (href.startsWith('?')) {
-                                    url = frame.url + href;
-                                } else {
-                                    url = href;
-                                }
+                            // We want default behaviour for external links and downloads, but nothing else
+                            e.preventDefault();
 
-                                if (link.target === '_modal') {
-                                    window.openModal(url);
-                                } else {
-                                    parent.postMessage({
-                                        id: frame.id,
-                                        type: 'navigate',
-                                        url,
-                                    }, "*");
-                                }
-                            });
-                        };
+                            // Ignore fragments for now
+                            // TODO
+                            if (href.startsWith('#')) {
+                                return;
+                            }
 
-                        // Ajaxify forms
-                        // Note: Some forms are submitted through ajax anyway, we don't care about those
-                        // We only want to ajaxify forms that will otherwise reload the page
-                        const processForm = (form) => {
+                            if (href.startsWith('?')) {
+                                path = event.data.path + href;
+                            } else {
+                                path = href;
+                            }
+
+                            // Handle the link
+                            if (link.target === '_modal') {
+                                window.openModal(path);
+                            } else {
+                                parent.postMessage({
+                                    id: event.data.frameId,
+                                    type: 'navigate',
+                                    path,
+                                }, window.origin);
+                            }
+                        });
+                    };
+
+                    // Ajaxify forms
+                    // Note: Some forms are submitted through ajax anyway, we don't care about those
+                    // We only want to ajaxify forms that will otherwise reload the page
+                    const processForm = (form) => {
+                        form.addEventListener('submit', (e) => {
+                            e.preventDefault();
+
                             // Get action URL
                             // Note: Don't use form.action here as some forms have an action field!
                             // Note: If action is not specified, fall back to the current pathname with any existing GET parameters removed
-                            const action = form.getAttribute('action') || frame.url.split('?')[0];
+                            const action = form.getAttribute('action') || event.data.path.split('?')[0];
+                            const method = form.getAttribute('method');
+                            const data = new URLSearchParams(new FormData(form));
 
-                            form.addEventListener('submit', (e) => {
-                                e.preventDefault();
+                            // Add value of clicked submit button to form data
+                            if (e.submitter.value) {
+                                data.set(e.submitter.name, e.submitter.value);
+                            }
 
-                                const method = form.getAttribute('method');
-                                const isPost = method && method.toLowerCase() == 'post';
-                                const data = new FormData(form);
-
-                                // Add value of clicked submit button to form data
-                                if (e.submitter.value) {
-                                    data.set(e.submitter.name, e.submitter.value);
-                                }
+                            if (method && method.toLowerCase() == 'post') {
+                                // Form is a POST form
+                                // Submit form contents with a fetch() request, then handle the response
+                                fetch(action, {
+                                    method: 'post',
+                                    body: data,
+                                    credentials: "same-origin",
+                                }).then(handleResponse);
+                            } else {
+                                // Form is a GET form
+                                // Construct a path containing the form data and navigate to it
+                                const path =
+                                    action +
+                                    (action.indexOf("?") === -1 ? "?" : "&") +
+                                    data.toString();
 
                                 parent.postMessage({
-                                    id: frame.id,
-                                    type: 'submit-form',
-                                    action,
-                                    method: isPost ? 'post' : 'get',
-                                    data,
-                                }, "*");
-                            });
-                        }
-
-                        // Set up elements that are in the initial response and set them up
-                        Array.from(document.links).forEach(processLink);
-                        Array.from(document.forms).forEach(processForm);
-
-                        // Create an observer to listen for new links and forms
-                        const observer = new MutationObserver((mutationsList, observer) => {
-                            // Use traditional 'for loops' for IE 11
-                            mutationsList.forEach(mutation => {
-                                if (mutation.type === 'childList') {
-                                    mutation.addedNodes.forEach(node => {
-                                        if (node instanceof HTMLElement) {
-                                            node.querySelectorAll('a[href]').forEach(processLink);
-                                            node.querySelectorAll('form').forEach(processForm);
-                                        }
-                                    })
-                                }
-                            })
+                                    id: event.data.frameId,
+                                    type: 'navigate',
+                                    path,
+                                }, window.origin);
+                            }
                         });
-
-                        // Start observing the target node for configured mutations
-                        observer.observe(document.body, { attributes: false, childList: true, subtree: true });
-
-                        parent.postMessage({
-                            id: frame.id,
-                            type: 'load',
-                            title: document.title,
-                        }, "*");
-                    };
-
-                    // Chrome/Edge load the document immedately and doesn't bother to fire DOMContentLoaded most of the time
-                    // Firefox never loads the document immediately and always fires DOMContentLoaded
-                    if (document.body) {
-                        onLoad();
-                    } else {
-                        document.addEventListener('DOMContentLoaded', onLoad);
                     }
+
+                    // Set up elements that are in the initial response and set them up
+                    Array.from(document.links).forEach(processLink);
+                    Array.from(document.forms).forEach(processForm);
+
+                    // Create an observer to listen for new links and forms
+                    const observer = new MutationObserver((mutationsList, observer) => {
+                        // Use traditional 'for loops' for IE 11
+                        mutationsList.forEach(mutation => {
+                            if (mutation.type === 'childList') {
+                                mutation.addedNodes.forEach(node => {
+                                    if (node instanceof HTMLElement) {
+                                        node.querySelectorAll('a[href]').forEach(processLink);
+                                        node.querySelectorAll('form').forEach(processForm);
+                                    }
+                                })
+                            }
+                        })
+                    });
+
+                    // Start observing the target node for configured mutations
+                    observer.observe(document.body, { attributes: false, childList: true, subtree: true });
+
+                    parent.postMessage({
+                        id: event.data.frameId,
+                        type: 'load',
+                        title: document.title,
+                    }, window.origin);
+                };
+
+                document.open();
+                document.write(event.data.html);
+                document.close();
+
+                // Chrome/Edge load the document immedately and doesn't bother to fire DOMContentLoaded most of the time
+                // Firefox never loads the document immediately and always fires DOMContentLoaded
+                if (document.body) {
+                    onLoad();
+                } else {
+                    document.addEventListener('DOMContentLoaded', onLoad);
                 }
             }, false);
         </script>

@@ -1,26 +1,26 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React, { ReactElement } from "react";
+import "./App.css";
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+import Shell from "./shell";
+import { TurboResponse } from "./shell/fetch";
+import IFrameView from "./views/IFrame";
+
+const views = new Map();
+views.set('iframe', IFrameView);
+
+function App(): ReactElement {
+    const rootElement = document.getElementById("root");
+    const initialResponse = rootElement?.dataset.initialResponse;
+
+    if (initialResponse) {
+        return (
+            <Shell
+                views={views}
+                initialResponse={JSON.parse(initialResponse) as TurboResponse}
+            />
+        );
+    }
+    return <>Unable to render</>;
 }
 
 export default App;

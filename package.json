@@ -1,13 +1,13 @@
 {
-  "name": "wagtail-shell",
+  "name": "wagtail-turbo",
   "version": "1.0.0",
   "description": "",
-  "main": "wagtail_shell/static_src/main.tsx",
+  "main": "wagtail_turbo/static_src/main.tsx",
   "scripts": {
     "build": "webpack --mode=production",
     "start": "webpack --mode=development --watch",
-    "format": "prettier --write wagtail_shell/**/*.{ts,tsx,scss}",
-    "lint": "prettier --check wagtail_shell/**/*.{ts,tsx,scss}"
+    "format": "prettier --write wagtail_turbo/**/*.{ts,tsx,scss}",
+    "lint": "prettier --check wagtail_turbo/**/*.{ts,tsx,scss}"
   },
   "author": "",
   "license": "ISC",

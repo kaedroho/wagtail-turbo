@@ -1,6 +1,6 @@
 [run]
 branch = True
-include = wagtail_shell/*
+include = wagtail_turbo/*
 omit = */migrations/*,*/tests/*
 
 [report]

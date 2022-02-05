@@ -1,14 +1,14 @@
 *.pyc
 /build
 /dist
-/wagtail_shell.egg-info
+/wagtail_turbo.egg-info
 /.coverage
 /htmlcov
 /.tox
 /venv
 /.vscode
 /site
-/test_wagtail_shell.db
+/test_wagtail_turbo.db
 /node_modules
 /test-static
 /test-media

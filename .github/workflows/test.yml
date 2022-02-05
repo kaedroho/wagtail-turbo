@@ -1,4 +1,4 @@
-name: Shell CI
+name: Turbo CI
 
 on:
   push:
@@ -62,5 +62,5 @@ jobs:
         run: |
           tox
         env:
-          DATABASE_URL: postgres://postgres:postgres@localhost:5432/wagtail_shell
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/wagtail_turbo
           TOXENV: python${{ matrix.python }}-django${{ matrix.django }}-wagtail${{ matrix.wagtail }}-postgres

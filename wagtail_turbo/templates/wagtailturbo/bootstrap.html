@@ -1,138 +1,115 @@
-<!doctype html>
-{% load wagtailadmin_tags wagtailcore_tags i18n wagtailturbo_tags %}
-{% get_current_language as LANGUAGE_CODE %}
-{% get_current_language_bidi as LANGUAGE_BIDI %}
-<html class="no-js" lang="{{ LANGUAGE_CODE }}" dir="{% if LANGUAGE_BIDI %}rtl{% else %}ltr{% endif %}">
+<!DOCTYPE html>{% load static %}
+<html lang="en">
+
 <head>
-    <meta charset="utf-8" />
-    <title>{% block branding_title %}Wagtail{% endblock %} - {% block titletag %}{% endblock %}</title>
-    <meta name="description" content="" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="robots" content="noindex" />
+  <meta charset="utf-8" />
+  <link rel="icon" href="favicon.ico" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#000000" />
+  <meta name="description" content="Web site created using create-react-app" />
+  <title>Loading</title>
 
-    <script src="{% versioned_static 'wagtailadmin/js/vendor/modernizr-2.6.2.min.js' %}"></script>
+  {% for src in css %}
+  <link href="{% static src %}" rel="stylesheet" />
+  {% endfor %}
 
-    <link rel="stylesheet" href="{% versioned_static 'wagtailadmin/css/normalize.css' %}" />
+  <style>
+    .loading-screen {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1000;
 
-    <style>
-        body {
-            overscroll-behavior: none;
-        }
-    </style>
+      opacity: 1;
+      transition: opacity 0.2s;
+    }
 
-    {% block css %}{% endblock %}
+    .loading-screen--hidden {
+      opacity: 0;
+    }
 
-    {% block branding_favicon %}
-        <link rel="shortcut icon" href="{% versioned_static 'wagtailadmin/images/favicon.ico' %}" />
-    {% endblock %}
+    .loading-screen__spinner {
+      opacity: 0;
+      transition: opacity 0.2s;
+
+      position: absolute;
+      left: calc(50% - 40px);
+      top: calc(50% - 40px)
+    }
+
+    .loading-screen--show-spinner .loading-screen__spinner {
+      opacity: 1;
+    }
+
+    .loading-screen__text {
+      position: absolute;
+      top: 32px;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-size: 13px;
+      color: white;
+      width: 80px;
+      text-align: center;
+    }
+  </style>
 </head>
-<body id="wagtail" class="{% block bodyclass %}{% endblock %} {% if messages %}has-messages{% endif %} focus-outline-on">
-    <div data-sprite></div>
-    <script>
-        function loadIconSprite() {
-            var spriteURL = '{% url "wagtailadmin_sprite" %}';
-            var revisionKey = 'wagtail:spriteRevision';
-            var dataKey = 'wagtail:spriteData';
-            var isLocalStorage = 'localStorage' in window && typeof window.localStorage !== 'undefined';
 
-            var insertIt = function (data) {
-                var spriteContainer = document.body.querySelector('[data-sprite]');
-                spriteContainer.innerHTML = data;
-            }
+<body>
+  <noscript>You need to enable JavaScript to run this app.</noscript>
 
-            var insert = function (data) {
-                if (document.body) {
-                    insertIt(data)
-                } else {
-                    document.addEventListener('DOMContentLoaded', insertIt.bind(null, data));
-                }
-            }
+  <div class="loading-screen">
+    <div class="loading-screen__spinner">
+      <svg
+        width="80"
+        height="80"
+        viewBox="0 0 200 200"
+        color="#00C9D6"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <defs>
+          <linearGradient id="spinner-secondHalf">
+            <stop offset="0%" stop-opacity="0" stop-color="currentColor" />
+            <stop offset="100%" stop-opacity="0.5" stop-color="currentColor" />
+          </linearGradient>
+          <linearGradient id="spinner-firstHalf">
+            <stop offset="0%" stop-opacity="1" stop-color="currentColor" />
+            <stop offset="100%" stop-opacity="0.5" stop-color="currentColor" />
+          </linearGradient>
+        </defs>
 
-            if (isLocalStorage && localStorage.getItem(revisionKey) === spriteURL) {
-                var data = localStorage.getItem(dataKey);
-                if (data) {
-                    insert(data);
-                    return true;
-                }
-            }
+        <g stroke-width="8">
+          <path stroke="url(#spinner-secondHalf)" d="M 4 100 A 96 96 0 0 1 196 100" />
+          <path stroke="url(#spinner-firstHalf)" d="M 196 100 A 96 96 0 0 1 4 100" />
 
-            try {
-                var request = new XMLHttpRequest();
-                request.open('GET', spriteURL, true);
-                request.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-                request.onload = function () {
-                    if (request.status >= 200 && request.status < 400) {
-                        data = request.responseText;
-                        insert(data);
-                        if (isLocalStorage) {
-                            localStorage.setItem(dataKey, data);
-                            localStorage.setItem(revisionKey, spriteURL);
-                        }
-                    }
-                }
-                request.send();
-            } catch (e) {
-                console.error(e);
-            }
-        }
-        loadIconSprite();
-    </script>
+          <!-- 1deg extra path to have the round end cap -->
+          <path
+            stroke="currentColor"
+            stroke-linecap="round"
+            d="M 4 100 A 96 96 0 0 1 4 98"
+          />
+        </g>
 
-    <!--[if lt IE 9]>
-        <p class="capabilitymessage">{% blocktrans %}You are using an <strong>outdated</strong> browser not supported by this software. Please <a href="https://browsehappy.com/">upgrade your browser</a>.{% endblocktrans %}</p>
-    <![endif]-->
-    <noscript class="capabilitymessage">
-        {% blocktrans %}
-            JavaScript is required to use Wagtail, but it is currently disabled.<br />
-            Here are the <a href="https://www.enable-javascript.com/" target="_blank" rel="noopener noreferrer">instructions how to enable JavaScript in your web browser</a>.
-        {% endblocktrans %}
-    </noscript>
+        <animateTransform
+          from="0 0 0"
+          to="360 0 0"
+          attributeName="transform"
+          type="rotate"
+          repeatCount="indefinite"
+          dur="1300ms"
+        />
+      </svg>
 
-    {% block js %}
-    <script>
-        (function(document, window) {
-            window.wagtailConfig = window.wagtailConfig || {};
-            wagtailConfig.ADMIN_API = {
-                PAGES: '{% url "wagtailadmin_api:pages:listing" %}',
-                DOCUMENTS: '{% url "wagtailadmin_api:documents:listing" %}',
-                IMAGES: '{% url "wagtailadmin_api:images:listing" %}',
-                {# // Use this to add an extra query string on all API requests. #}
-                {# // Example value: '&order=-id' #}
-                EXTRA_CHILDREN_PARAMETERS: '',
-            };
-
-            {% i18n_enabled as i18n_enabled %}
-            {% locales as locales %}
-            wagtailConfig.I18N_ENABLED = {% if i18n_enabled %}true{% else %}false{% endif %};
-            wagtailConfig.LOCALES = {{ locales|safe }};
-
-            wagtailConfig.STRINGS = {% js_translation_strings %};
-
-            wagtailConfig.ADMIN_URLS = {
-                PAGES: '{% url "wagtailadmin_explore_root" %}'
-            };
-        })(document, window);
-    </script>
-    <script src="{% versioned_static 'wagtailadmin/js/vendor.js' %}"></script>
-    <script src="{% versioned_static 'wagtailadmin/js/wagtailadmin.js' %}"></script>
-
-    <script src="{% url 'wagtail_turbo:javascript_catalog' %}"></script>
-    <script src="{% versioned_static 'wagtail_turbo/js/wagtail-turbo.js' %}"></script>
-    {% endblock %}
-
-    <a class="skiplink button" href="#main" data-skiplink>{% trans 'Skip to main content' %}</a>
-
-    <div id="wagtailturbo-root" data-initial-response="{{ data }}">
-        {% include 'wagtailturbo/sidebar.html' %}
+      <div class="loading-screen__text">Loading</div>
     </div>
-    <script>
-        window.csrfToken = '{{ csrf_token|escapejs }}';
-    </script>
+  </div>
+
+  <div id="root" data-initial-response="{{ data }}"></div>
+  {% for src in js %}
+  <script src="{% static src %}" async defer></script>
+  {% endfor %}
+  <!-- <script>document.addEventListener('DOMContentLoaded', () => { setTimeout(() => { document.querySelector('.loading-screen').classList.add('loading-screen--show-spinner') }, 100) });</script> -->
 </body>
+
 </html>
-
-
-
-
-
-

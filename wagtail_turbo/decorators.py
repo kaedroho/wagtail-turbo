@@ -1,7 +1,10 @@
 import functools
+import json
+from pathlib import Path
 
 from django.shortcuts import render
 
+import wagtail_turbo
 from .response import TurboResponse, TurboResponseLoadIt, convert_to_turbo_response
 
 
@@ -32,10 +35,27 @@ def turbo_enable(fn):
 
         # Regular browser request
         if isinstance(response, TurboResponse):
-            # Wrap the response with our turbo bootstrap template
-            return render(request, 'wagtailturbo/bootstrap.html', {
-                'data': response.content.decode('utf-8'),
-            })
+            js = []
+            css = []
+            asset_manifest = json.loads((Path(wagtail_turbo.__file__).parent / "static/wagtail_turbo/asset-manifest.json").read_text())
+            for asset in asset_manifest["entrypoints"]:
+                if asset.endswith(".js"):
+                    js.append('wagtail_turbo/' + asset)
+                elif asset.endswith(".css"):
+                    css.append('wagtail_turbo/' + asset)
+
+            print(js, css)
+
+            # Wrap the response with our shell bootstrap template
+            return render(
+                request,
+                "wagtailturbo/bootstrap.html",
+                {
+                    "data": response.content.decode("utf-8"),
+                    "js": js,
+                    "css": css,
+                },
+            )
         else:
             return response
 

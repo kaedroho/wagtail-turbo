@@ -5,6 +5,8 @@
 tasks:
   - init: npm install && npm run build && pip install .
     command: npm run start
+  - init: cd demo && pip install -r requirements.txt && python manage.py migrate
+    command: python manage.py runserver
 vscode:
   extensions:
     - dbaeumer.vscode-eslint

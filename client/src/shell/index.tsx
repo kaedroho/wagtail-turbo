@@ -2,6 +2,7 @@ import React, { ReactElement } from "react";
 import styled from "styled-components";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import produce from "immer";
+import Cookies from 'js-cookie';
 
 import Browser from "./components/Browser";
 import ToastMessages from "./components/ToastMessages";
@@ -10,6 +11,11 @@ import { Message, TurboResponse } from "./fetch";
 
 import { NavigationController } from "./navigation";
 import { ShellViewFunction } from "./views";
+import { ModuleDefinition, Sidebar } from "../sidebar/Sidebar";
+
+export const SIDEBAR_COLLAPSED_COOKIE_NAME = 'wagtail_sidebar_collapsed';
+
+export const SetSidebarModulesContext = React.createContext<(modules: ModuleDefinition[]) => void>(() => {});
 
 export interface ShellProps {
     views: Map<string, ShellViewFunction>;
@@ -27,7 +33,6 @@ const BrowserWrapper = styled.div`
 `;
 
 function Shell({ views, initialResponse }: ShellProps): ReactElement {
-    console.log(views, initialResponse)
     const [navigationController] = React.useState(
         () => new NavigationController("browser", null)
     );
@@ -41,6 +46,9 @@ function Shell({ views, initialResponse }: ShellProps): ReactElement {
     const modalCloseListener = React.useRef<(() => void) | null>(null);
 
     const [render, setRender] = React.useState(0);
+
+    // Create a state to store the sidebar module definitions. This will be set by a view
+    const [sidebarModules, setSidebarModules] = React.useState<ModuleDefinition[]>([]);
 
     // Get list of messages to display at the top by combining server messages with any locally raised messages
     const frameMessages =
@@ -182,8 +190,31 @@ function Shell({ views, initialResponse }: ShellProps): ReactElement {
         };
     });
 
+    const collapsedCookie: any = Cookies.get(SIDEBAR_COLLAPSED_COOKIE_NAME);
+    // Cast to boolean
+    const collapsed = !(
+      collapsedCookie === undefined || collapsedCookie === '0'
+    );
+
+    const onExpandCollapse = (_collapsed: boolean) => {
+      if (_collapsed) {
+        document.body.classList.add('sidebar-collapsed');
+        Cookies.set(SIDEBAR_COLLAPSED_COOKIE_NAME, "1");
+      } else {
+        document.body.classList.remove('sidebar-collapsed');
+        Cookies.set(SIDEBAR_COLLAPSED_COOKIE_NAME, "0");
+      }
+    };
+
     return (
         <ShellWrapper>
+            <Sidebar
+                modules={sidebarModules}
+                collapsedOnLoad={collapsed}
+                currentPath={navigationController.currentFrame.path}
+                navigate={navigationController.navigate}
+                onExpandCollapse={onExpandCollapse}
+            />,
             <ToastMessages messages={frameMessages} />
             {modal &&
                 modal.navigationController.currentFrame.view !== "loading" && (
@@ -200,12 +231,14 @@ function Shell({ views, initialResponse }: ShellProps): ReactElement {
                     </ModalWindow>
                 )}
             <BrowserWrapper>
-                <Browser
-                    views={views}
-                    navigationController={navigationController}
-                    openModal={(url, onClose) => openModal(url, onClose)}
-                    pushMessage={pushMessage}
-                />
+                <SetSidebarModulesContext.Provider value={setSidebarModules}>
+                    <Browser
+                        views={views}
+                        navigationController={navigationController}
+                        openModal={(url, onClose) => openModal(url, onClose)}
+                        pushMessage={pushMessage}
+                    />
+                </SetSidebarModulesContext.Provider>
             </BrowserWrapper>
         </ShellWrapper>
     );

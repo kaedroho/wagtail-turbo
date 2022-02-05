@@ -1805,6 +1805,11 @@
     jest-diff "^27.0.0"
     pretty-format "^27.0.0"
 
+"@types/js-cookie@^3.0.1":
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/@types/js-cookie/-/js-cookie-3.0.1.tgz#04aa743e2e0a85a22ee9aa61f6591a8bc19b5d68"
+  integrity sha512-7wg/8gfHltklehP+oyJnZrz9XBuX5ZPP4zB6UsI84utdlkRYLnOm2HfpLXazTwZA+fpGn0ir8tGNgVnMEleBGQ==
+
 "@types/json-schema@*", "@types/json-schema@^7.0.3", "@types/json-schema@^7.0.5", "@types/json-schema@^7.0.7", "@types/json-schema@^7.0.8":
   version "7.0.9"
   resolved "https://registry.yarnpkg.com/@types/json-schema/-/json-schema-7.0.9.tgz#97edc9037ea0c38585320b28964dde3b39e4660d"
@@ -6813,6 +6818,11 @@ jest@26.6.0:
     import-local "^3.0.2"
     jest-cli "^26.6.0"
 
+js-cookie@^3.0.1:
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/js-cookie/-/js-cookie-3.0.1.tgz#9e39b4c6c2f56563708d7d31f6f5f21873a92414"
+  integrity sha512-+0rgsUXZu4ncpPxRL+lNEptWMOWl9etvPHc/koSRp6MPwpRYAhmk0dUG00J4bxVV3r9uUzfo24wW0knS07SKSw==
+
 "js-tokens@^3.0.0 || ^4.0.0", js-tokens@^4.0.0:
   version "4.0.0"
   resolved "https://registry.yarnpkg.com/js-tokens/-/js-tokens-4.0.0.tgz#19203fb59991df98e3a287050d4647cdeaf32499"
@@ -10523,6 +10533,11 @@ tar@^6.0.2:
     minizlib "^2.1.1"
     mkdirp "^1.0.3"
     yallist "^4.0.0"
+
+telepath-unpack@^0.0.3:
+  version "0.0.3"
+  resolved "https://registry.yarnpkg.com/telepath-unpack/-/telepath-unpack-0.0.3.tgz#f4e9d436e8f72889de1a032a7ac968963d04f9f7"
+  integrity sha512-i2qwBgLWJMfluXWO3keCZdlKGBNFV4ATwIXCvKSW0mspkJfnHycJccsM6+W7Z5egLqEE4DhQNDzXfyXBLig4lg==
 
 temp-dir@^1.0.0:
   version "1.0.0"

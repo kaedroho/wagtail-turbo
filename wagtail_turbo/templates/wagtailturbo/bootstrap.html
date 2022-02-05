@@ -9,6 +9,8 @@
   <meta name="description" content="Web site created using create-react-app" />
   <title>Loading</title>
 
+  <link href="{% static 'wagtailadmin/css/core.css' %}" rel="stylesheet" />
+  <link href="{% static 'wagtailadmin/css/sidebar.css' %}" rel="stylesheet" />
   {% for src in css %}
   <link href="{% static src %}" rel="stylesheet" />
   {% endfor %}

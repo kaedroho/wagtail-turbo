@@ -1,13 +1,22 @@
 /* eslint-disable react/require-default-props */
 
 import React, { ReactElement } from "react";
+import { SetSidebarModulesContext } from "../shell";
 import { ShellNavigationContext } from "../shell/components/Browser";
 import { ShellViewProps } from "../shell/views";
+import { ModuleDefinition } from "../sidebar/Sidebar";
+import telepath from "../telepath";
 
 interface LoadIFrameEvent {
     id: number;
     type: "load";
     title: string;
+}
+
+interface SetSidebarModulesEvent {
+    id: number;
+    type: "set-sidebar-modules";
+    sidebarModules: any[];
 }
 
 interface NavigateIFrameEvent {
@@ -30,6 +39,7 @@ interface OpenModalIFrameEvent {
 
 type IFrameEvent =
     | LoadIFrameEvent
+    | SetSidebarModulesEvent
     | NavigateIFrameEvent
     | ReplacePathIFrameEvent
     | OpenModalIFrameEvent;
@@ -63,6 +73,8 @@ function IFrameView({
         ShellNavigationContext
     );
 
+    const setSidebarModules = React.useContext(SetSidebarModulesContext);
+
     const onIframeLoad = (e: React.SyntheticEvent<HTMLIFrameElement>) => {
         if (e.target instanceof HTMLIFrameElement && e.target.contentWindow) {
             e.target.contentWindow.postMessage(
@@ -81,6 +93,10 @@ function IFrameView({
                     // if (onLoad) {
                     //     onLoad(event.title);
                     // }
+                }
+
+                if (event.type === "set-sidebar-modules") {
+                    setSidebarModules(telepath.unpack(event.sidebarModules) as ModuleDefinition[]);
                 }
 
                 if (event.type === "navigate") {

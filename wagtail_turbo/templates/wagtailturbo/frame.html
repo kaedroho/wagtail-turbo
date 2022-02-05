@@ -64,6 +64,16 @@
                 };
 
                 const onLoad = () => {
+                    // Update sidebar modules
+                    const sidebarElement = document.querySelector('aside#wagtail-sidebar[data-props]');
+                    if (sidebarElement) {
+                        parent.postMessage({
+                            id: event.data.frameId,
+                            type: 'set-sidebar-modules',
+                            sidebarModules: JSON.parse(sidebarElement.dataset.props).modules,
+                        }, window.origin);
+                    }
+
                     // Ajaxify links
                     const processLink = (link) => {
                         link.addEventListener('click', (e) => {
